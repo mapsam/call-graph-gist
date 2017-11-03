@@ -1,0 +1,49 @@
+<head>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+  <style>
+    * {
+      box-sizing:border-box;
+      -moz-box-sizing:border-box;
+      -webkit-box-sizing:border-box;
+    }
+    body {
+      margin:0;
+      padding:0;
+      font-family: monospace;
+      font-size: 15px;
+      line-height: 1.5em;
+    }
+    .container {
+      margin: 2em auto;
+      max-width: 800px;
+      /*overflow-x: scroll;*/
+    }
+
+    .counts {
+      white-space: nowrap;
+      overflow-x: scroll;
+      padding-left: 3em;
+    }
+    .counts li a {
+      text-decoration: none;
+      color: black;
+    }
+    .counts li span {
+      color: #c0c0c0;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <p>Hi there welcome welcome. Here you can view Activity Monitor call graphs by uploading them and generating a permalink. Here's an <a href="">example</a>.</p>
+
+  <form action="/new" method="POST">
+    <p>Upload a profile .txt file from Activity Monitor to generate a shareable permalink.</p>
+    <input type="submit" value="Submit">
+  </form>
+</div>
+
+</body>

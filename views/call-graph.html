@@ -1,0 +1,59 @@
+<head>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+  <style>
+    * {
+      box-sizing:border-box;
+      -moz-box-sizing:border-box;
+      -webkit-box-sizing:border-box;
+    }
+    body {
+      margin:0;
+      padding:0;
+      font-family: monospace;
+      font-size: 15px;
+      line-height: 1.5em;
+    }
+    .container {
+      margin: 2em auto;
+      max-width: 800px;
+      /*overflow-x: scroll;*/
+    }
+
+    .counts {
+      white-space: nowrap;
+      overflow-x: scroll;
+      padding-left: 3em;
+    }
+    .counts li a {
+      text-decoration: none;
+      color: black;
+    }
+    .counts li span {
+      color: #c0c0c0;
+    }
+  </style>
+</head>
+
+<div class="container">
+  <% if (typeof cg !== 'undefined') { %>
+    <h2>Callgraph (<%= cg.id %>)</h2>
+
+    <h3>Notes</h3>
+    <p><% cg.metadata.notes.forEach(function(note) { %>
+      <%= note %><br>
+    <% }); %></p>
+
+    <h3 id="metadata"><a href="#metadata">Metadata</a></h3>
+    <ul><% for (var m in cg.metadata) { if (m !== "notes") { %>
+      <li><%= m %>: <%= cg.metadata[m] %></li>
+    <% }} %></ul>
+
+    <h3 id="counts"><a href="#counts">Counts</a></h3>
+    <p>Total: <%= cg.counts.total %><p>
+    <ol class="counts"><% cg.counts.instances.forEach(function(c, i) { %>
+      <li id="counts-<%= i+1 %>"><a href="#counts-<%= i+1 %>"><strong><%= c.percent %>%</strong> (<%= c.count %>): <span><%= c.process %></span></a></li>
+    <% }); %></ol>
+
+  <% } %>
+</div>
