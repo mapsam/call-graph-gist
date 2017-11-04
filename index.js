@@ -1,9 +1,10 @@
 var express = require('express');
 var ejs = require('ejs');
 var bodyParser = require('body-parser');
-var fs = require('fs');
+var multer = require('multer');
 var hat = require('hat');
 var AWS = require('aws-sdk');
+var timestamp = require('time-stamp');
 var cg2json = require('./cg2json');
 
 var app = express();
@@ -12,6 +13,10 @@ app.set('port', (process.env.PORT || 5000));
 app.engine('html', require('ejs').renderFile);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+var upload = multer({
+  storage: multer.memoryStorage()
+});
 
 app.get('/', function(req, res) {
   return res.render('./index.html');
@@ -35,12 +40,18 @@ app.get('/:cgID', function(req, res) {
   });
 });
 
-app.post('/new', function(req, res) {
-  var s3 = new AWS.S3();
-  var cgText = fs.readFileSync('./sample-graph.txt', 'utf8'); //req.body.text
-  var cgjson = cg2json(cgText);
-  cgjson.id = hat();
+app.post('/new', upload.single('cgtext'), function(req, res) {
+  if (!req.file) {
+    return res.render('./error.html', {message: `Hmmm, there wasn't a callgraph document included in the form submission. Please try again!`});
+  }
 
+  var cgstring = req.file.buffer.toString('utf8');
+  var cgjson = cg2json(cgstring);
+  cgjson.id = hat();
+  cgjson.name = req.body.name || 'Callgraph';
+  cgjson.created = timestamp('YYYY-MM-DD HH:mm:ss');
+
+  var s3 = new AWS.S3();
   var params = {
     Bucket: process.env.AWS_S3_BUCKET,
     Key: `${cgjson.id}.json`,

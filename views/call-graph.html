@@ -37,7 +37,8 @@
 
 <div class="container">
   <% if (typeof cg !== 'undefined') { %>
-    <h2>Callgraph (<%= cg.id %>)</h2>
+    <h2><%= cg.name %> (<%= cg.id %>)</h2>
+    <p>Created on <%= cg.created || '-' %></p>
 
     <h3>Notes</h3>
     <p><% cg.metadata.notes.forEach(function(note) { %>

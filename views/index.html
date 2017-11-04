@@ -17,7 +17,6 @@
     .container {
       margin: 2em auto;
       max-width: 800px;
-      /*overflow-x: scroll;*/
     }
 
     .counts {
@@ -38,10 +37,13 @@
 <body>
 
 <div class="container">
-  <p>Hi there welcome welcome.</p>
+  <h1>Callgraph</h1>
+  <p>Hi there welcome welcome. Here you can create digestible and shareable <a href="https://en.wikipedia.org/wiki/Call_graph" target="_blank">callgraph</a> documents from Activity Monitor for profiling multi-threaded processes.</p>
 
-  <form action="/new" method="POST">
+  <form action="/new" method="POST" enctype="multipart/form-data">
     <p>Upload a profile .txt file from Activity Monitor to generate a shareable permalink.</p>
+    <input name="name" type="text" placeholder="Name" required>
+    <input type="file" name="cgtext" id="cgtext" accept=".txt" required>
     <input type="submit" value="Submit">
   </form>
 </div>
