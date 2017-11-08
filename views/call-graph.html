@@ -1,5 +1,6 @@
 <head>
   <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <script src="http://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
 
   <style>
     * {
@@ -32,6 +33,34 @@
     .counts li span {
       color: #c0c0c0;
     }
+
+    .threads {
+      overflow-x: scroll;
+      white-space: nowrap;
+    }
+
+    .thread li {
+      list-style-type: none;
+      cursor: pointer;
+    }
+    .thread li:before {
+      content:'\25BA';
+      margin-right: 5px;
+      font-size: 0.7em;
+      color: #c0c0c0;
+    }
+    .thread li.open:before {
+      content:'\25BC';
+    }
+    .thread li ul {
+      display: none;
+    }
+    .thread li ul.open {
+      display: block;
+    }
+    .open {
+      display: block;
+    }
   </style>
 </head>
 
@@ -56,5 +85,27 @@
       <li id="counts-<%= i+1 %>"><a href="#counts-<%= i+1 %>"><strong><%= c.percent %>%</strong> (<%= c.count %>): <span><%= c.process %></span></a></li>
     <% }); %></ol>
 
+    <h3 id="callgraph"><a href="#callgraph">Callgraph</a></h3>
+    <p>This is the callgraph</p>
+    <div class="threads">
+      <% cg.threads.forEach(function(thread, i) { %>
+        <div id="thread-<%= i %>" class="thread">
+          <a href="#thread-<%= i %>" class="thread-name"><%= thread.name %></a>
+          <%- thread.html %>
+        </div>
+      <% }); %>
+    </div>
+
   <% } %>
 </div>
+
+<script>
+$('.thread li').on('click', function(e) {
+  $(this).toggleClass('open');
+  var ul = $(this).children('ul');
+  console.log(ul);
+  ul.toggleClass('open');
+  e.stopPropagation();
+  return false;
+});
+</script>

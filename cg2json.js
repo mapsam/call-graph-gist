@@ -1,5 +1,7 @@
 'use strict';
 
+var markdown = require('markdown').markdown;
+
 module.exports = function(graphText) {
   const DATA = getBaseObject();
   const graph = graphText;
@@ -16,7 +18,7 @@ module.exports = function(graphText) {
         DATA.metadata.notes.push(m);
       } else {
         key = m.slice(0, keyEnd);
-        value = removeWhiteSpace(m.slice(keyEnd+1, m.length));
+        value = removeLeadingWhiteSpace(m.slice(keyEnd+1, m.length));
         DATA.metadata[key] = value;
       }
     }
@@ -28,19 +30,32 @@ module.exports = function(graphText) {
   const cg = graph.slice(cgBegin, cgEnd).split('\n');
 
   let currentThread = null;
+  let currentThreadIndex = 0;
   for (let l = 0; l < cg.length; l++) {
     let line = cg[l];
     if (!line.length || line === 'Call graph:') continue; // zero length line
-    line = removeWhiteSpace(line);
+    line = removeLeadingWhiteSpace(line);
 
     // this is a thread header
     if (line[0] !== '+' && line.indexOf('Thread_') > -1) {
-      DATA.threads[line] = [];
-      currentThread = DATA.threads[line];
-      continue;
+      DATA.threads.push({
+        name: line,
+        count: getThreadCount(line),
+        markdown: '',
+        html: ''
+      });
+      currentThread = DATA.threads[currentThreadIndex];
+      currentThreadIndex++;
+    } else {
+      line = convertToMarkdownListItem(line);
+      currentThread.markdown += line;
     }
+  }
 
-    // currentThread.push(line);
+  // convert each thread markdown into HTML
+  for (let m = 0; m < DATA.threads.length; m++) {
+    DATA.threads[m].html = markdown.toHTML(DATA.threads[m].markdown);
+    delete DATA.threads[m].markdown;
   }
 
   // counts
@@ -50,14 +65,14 @@ module.exports = function(graphText) {
   for (let c = 0; c < counts.length; c++) {
     let line = counts[c];
     if (!line.length || line.indexOf('Total number in stack') > -1) continue;
-    line = removeWhiteSpace(line);
+    line = removeLeadingWhiteSpace(line);
 
     let count = getPrefixCount(line);
     DATA.counts.total+=count;
 
     let countObj = {
       count: count,
-      process: removeWhiteSpace(line.slice((count + '').length+1, line.length))
+      process: removeLeadingWhiteSpace(line.slice((count + '').length+1, line.length))
     };
 
     DATA.counts.instances.push(countObj);
@@ -76,7 +91,7 @@ function getBaseObject() {
     metadata: {
       notes: []
     },
-    threads: {},
+    threads: [],
     counts: {
       total: 0,
       instances: []
@@ -84,7 +99,7 @@ function getBaseObject() {
   };
 }
 
-function removeWhiteSpace(string) {
+function removeLeadingWhiteSpace(string) {
   let newString = '';
   for (var i = 0; i < string.length; i++) {
     if (newString.length > 0) {
@@ -101,12 +116,51 @@ function removeWhiteSpace(string) {
   return newString;
 }
 
+function removeAllWhiteSpace(string) {
+  return string.replace(' ', '');
+}
+
+function markdownListItemOfLength(len) {
+  len = len+2;
+  return Array(len-2).join(' ') + '*' + ' ';
+}
 
 function getPrefixCount(string) {
-  var numString = '';
+  let numString = '';
   for (let i = 0; i < string.length; i++) {
     if (parseInt(string[i]) !== NaN) numString+=string[i];
     if (string[i] === ' ') break;
   }
   return parseInt(numString);
+}
+
+function lengthToFirstInteger(string) {
+  let index = 0;
+  for (let i = 0; i < string.length; i++) {
+    if (parseInt(string[i])) {
+      index = i;
+      break;
+    }
+  }
+  return index;
+}
+// xxxxxx
+
+function convertToMarkdownListItem(string) {
+  let lengthOfPrefix = lengthToFirstInteger(string);
+  let prefix = markdownListItemOfLength(lengthOfPrefix);
+  let content = string.slice(lengthOfPrefix);
+  return prefix + '`' + content + '`\n';
+}
+
+function getThreadCount(string) {
+  let finalInt = '';
+  for (let i = 0; i < string.length; i++) {
+    if (parseInt(string[i])) {
+      finalInt+=string[i];
+    } else {
+      break;
+    }
+  }
+  return parseInt(finalInt);
 }

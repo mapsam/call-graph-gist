@@ -1,10 +1,12 @@
 var express = require('express');
 var ejs = require('ejs');
+var path = require('path');
 var bodyParser = require('body-parser');
 var multer = require('multer');
 var hat = require('hat');
 var AWS = require('aws-sdk');
 var timestamp = require('time-stamp');
+var favicon = require('serve-favicon');
 var cg2json = require('./cg2json');
 
 var app = express();
@@ -13,6 +15,7 @@ app.set('port', (process.env.PORT || 5000));
 app.engine('html', require('ejs').renderFile);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')))
 
 var upload = multer({
   storage: multer.memoryStorage()
@@ -31,6 +34,7 @@ app.get('/:cgID', function(req, res) {
   };
 
   s3.getObject(params, function(err, response) {
+    console.log('about to get the key', params);
     if (err) {
       console.log(err);
       return res.render('./error.html', {message: `Uh oh! Call graph <strong>${cgID}</strong> cannot be found.`});
