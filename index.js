@@ -1,5 +1,6 @@
 var express = require('express');
 var ejs = require('ejs');
+var fs = require('fs');
 var path = require('path');
 var bodyParser = require('body-parser');
 var multer = require('multer');
@@ -15,7 +16,14 @@ app.set('port', (process.env.PORT || 5000));
 app.engine('html', require('ejs').renderFile);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')))
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+
+// create local_storage directory if it's not present
+if (process.env.CALLGRAPH_LOCAL_STORAGE) {
+  if (!fs.existsSync(`${__dirname}/local_storage/`)) {
+    fs.mkdirSync(`${__dirname}/local_storage/`);
+  }
+}
 
 var upload = multer({
   storage: multer.memoryStorage()
@@ -27,6 +35,17 @@ app.get('/', function(req, res) {
 
 app.get('/:cgID', function(req, res) {
   var cgID = req.params.cgID;
+
+  // if local storage is desired, do that
+  if (process.env.CALLGRAPH_LOCAL_STORAGE) {
+    try {
+      var localCGData = JSON.parse(fs.readFileSync(`${__dirname}/local_storage/${cgID}.json`));
+    } catch(err) {
+      return res.render('./error.html', {message: `Uh oh! Something went wrong: ${err.message}`});
+    }
+    return res.render('./call-graph.html', {cg: localCGData});
+  }
+
   var s3 = new AWS.S3();
   var params = {
     Bucket: process.env.AWS_S3_BUCKET,
@@ -54,6 +73,12 @@ app.post('/new', upload.single('cgtext'), function(req, res) {
   cgjson.id = hat();
   cgjson.name = req.body.name || 'Callgraph';
   cgjson.created = timestamp('YYYY-MM-DD HH:mm:ss');
+
+  // if local storage is desired, do that
+  if (process.env.CALLGRAPH_LOCAL_STORAGE) {
+    fs.writeFileSync(`${__dirname}/local_storage/${cgjson.id}.json`, JSON.stringify(cgjson));
+    return res.redirect(`/${cgjson.id}`);
+  }
 
   var s3 = new AWS.S3();
   var params = {

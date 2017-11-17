@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "CALLGRAPH_LOCAL_STORAGE=1 node index.js",
+    "start-prod": "node index.js",
     "test": "tape test/*.test.js"
   },
   "keywords": [],
