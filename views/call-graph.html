@@ -58,6 +58,9 @@
     .thread li ul.open {
       display: block;
     }
+    .thread-line.selected {
+      background-color: #FEF1C4;
+    }
     .open {
       display: block;
     }
@@ -100,12 +103,22 @@
 </div>
 
 <script>
-$('.thread li').on('click', function(e) {
-  $(this).toggleClass('open');
-  var ul = $(this).children('ul');
-  console.log(ul);
+$('.thread-line').on('click', function(e) {
+  console.log('hello');
+  $(this).parent().toggleClass('open');
+  var ul = $(this).parent().children('ul');
   ul.toggleClass('open');
   e.stopPropagation();
   return false;
+});
+
+$(document).ready(function() {
+  if (window.location.hash.indexOf('line-')) {
+    var elem = $(window.location.hash);
+    elem.parentsUntil('.thread-name', 'ul, li').toggleClass('open');
+    elem.addClass('selected');
+    elem.parent().toggleClass('open');
+    window.location = window.location.hash;
+  }
 });
 </script>

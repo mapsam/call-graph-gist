@@ -39,7 +39,7 @@ app.get('/:cgID', function(req, res) {
   // if local storage is desired, do that
   if (process.env.CALLGRAPH_LOCAL_STORAGE) {
     try {
-      var localCGData = JSON.parse(fs.readFileSync(`${__dirname}/local_storage/${cgID}.json`));
+      var localCGData = JSON.parse(fs.readFileSync(`${__dirname}/local_storage/${cgID}/data.json`));
     } catch(err) {
       return res.render('./error.html', {message: `Uh oh! Something went wrong: ${err.message}`});
     }
@@ -49,7 +49,7 @@ app.get('/:cgID', function(req, res) {
   var s3 = new AWS.S3();
   var params = {
     Bucket: process.env.AWS_S3_BUCKET,
-    Key: `${cgID}.json`
+    Key: `${cgID}/data.json`
   };
 
   s3.getObject(params, function(err, response) {
@@ -74,29 +74,63 @@ app.post('/new', upload.single('cgtext'), function(req, res) {
   cgjson.name = req.body.name || 'Callgraph';
   cgjson.created = timestamp('YYYY-MM-DD HH:mm:ss');
 
-  // if local storage is desired, do that
-  if (process.env.CALLGRAPH_LOCAL_STORAGE) {
-    fs.writeFileSync(`${__dirname}/local_storage/${cgjson.id}.json`, JSON.stringify(cgjson));
-    return res.redirect(`/${cgjson.id}`);
-  }
-
-  var s3 = new AWS.S3();
-  var params = {
-    Bucket: process.env.AWS_S3_BUCKET,
-    Key: `${cgjson.id}.json`,
-    Body: new Buffer(JSON.stringify(cgjson)),
-    ContentType: 'application/json'
-  };
-
-  s3.putObject(params, function(err, data) {
-    if (err) {
-      console.log(err);
-      return res.render('./error.html', {message: `Uh oh! We weren't able to save that file.`});
+  // save original
+  saveOriginal(cgjson.id, cgstring, function(err) {
+    // if local storage is desired, do that
+    if (process.env.CALLGRAPH_LOCAL_STORAGE) {
+      fs.writeFileSync(`${__dirname}/local_storage/${cgjson.id}/data.json`, JSON.stringify(cgjson));
+      return res.redirect(`/${cgjson.id}`);
     }
-    return res.redirect(`/${cgjson.id}`);
+
+    var s3 = new AWS.S3();
+    var params = {
+      Bucket: process.env.AWS_S3_BUCKET,
+      Key: `${cgjson.id}.json`,
+      Body: new Buffer(JSON.stringify(cgjson)),
+      ContentType: 'application/json'
+    };
+
+    s3.putObject(params, function(err, data) {
+      if (err) {
+        console.log(err);
+        return res.render('./error.html', {message: `Uh oh! We weren't able to save that file.`});
+      }
+
+      var params = {
+        Bucket: process.env.AWS_S3_BUCKET,
+        Key: `${cgjson.id}/data.json`,
+        Body: new Buffer(JSON.stringify(cgjson)),
+        ContentType: 'application/json'
+      };
+
+      return res.redirect(`/${cgjson.id}`);
+    });
   });
 });
 
 app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
 });
+
+function saveOriginal(id, raw, cb) {
+  var dst = `${id}/original`;
+
+  if (process.env.CALLGRAPH_LOCAL_STORAGE) {
+    fs.mkdirSync(`${__dirname}/local_storage/${id}`);
+    fs.writeFileSync(`${__dirname}/local_storage/${dst}`, raw);
+    return cb();
+  }
+
+  var s3 = new AWS.S3();
+  var params = {
+    Bucket: process.env.AWS_S3_BUCKET,
+    Key: dst,
+    Body: new Buffer(raw),
+    ContentType: 'text/plain'
+  };
+
+  s3.putObject(params, function(err) {
+    if (err) return cb(err);
+    return cb();
+  });
+}

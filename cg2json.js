@@ -1,6 +1,7 @@
 'use strict';
 
-var md = require('markdown-it')();
+var md = require('markdown-it')({ html: true });
+var shortid = require('shortid');
 
 module.exports = function(graphText) {
   const DATA = getBaseObject();
@@ -34,7 +35,7 @@ module.exports = function(graphText) {
   for (let l = 0; l < cg.length; l++) {
     let line = cg[l];
     if (!line.length || line === 'Call graph:') continue; // zero length line
-    line = removeLeadingWhiteSpace(line);
+    // line = removeLeadingWhiteSpace(line);
 
     // this is a thread header
     if (line[0] !== '+' && line.indexOf('Thread_') > -1) {
@@ -54,11 +55,8 @@ module.exports = function(graphText) {
 
   // convert each thread markdown into HTML
   for (let m = 0; m < DATA.threads.length; m++) {
-    if (!m) {
-      console.log(DATA.threads[m].markdown);
-      console.log(md.render(DATA.threads[m].markdown));
-    }
     DATA.threads[m].html = md.render(DATA.threads[m].markdown);
+    DATA.threads
     delete DATA.threads[m].markdown;
   }
 
@@ -125,8 +123,8 @@ function removeAllWhiteSpace(string) {
 }
 
 function markdownListItemOfLength(len) {
-  len = len+2;
-  return Array(len-2).join(' ') + '*' + ' ';
+  // len = len+2;
+  return Array(len-4).join(' ') + '*' + ' ';
 }
 
 function getPrefixCount(string) {
@@ -154,7 +152,8 @@ function convertToMarkdownListItem(string) {
   let lengthOfPrefix = lengthToFirstInteger(string);
   let prefix = markdownListItemOfLength(lengthOfPrefix);
   let content = string.slice(lengthOfPrefix);
-  return prefix + '`' + content + '`\n';
+  let id = shortid.generate();
+  return prefix + '[&#128279;](#line-'+id+') <span class="thread-line" id="line-'+id+'">' + content + '</span>\n';
 }
 
 function getThreadCount(string) {
