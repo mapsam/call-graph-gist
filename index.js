@@ -85,7 +85,7 @@ app.post('/new', upload.single('cgtext'), function(req, res) {
     var s3 = new AWS.S3();
     var params = {
       Bucket: process.env.AWS_S3_BUCKET,
-      Key: `${cgjson.id}.json`,
+      Key: `${cgjson.id}/data.json`,
       Body: new Buffer(JSON.stringify(cgjson)),
       ContentType: 'application/json'
     };
