@@ -1,6 +1,6 @@
 'use strict';
 
-var markdown = require('markdown').markdown;
+var md = require('markdown-it')();
 
 module.exports = function(graphText) {
   const DATA = getBaseObject();
@@ -54,7 +54,11 @@ module.exports = function(graphText) {
 
   // convert each thread markdown into HTML
   for (let m = 0; m < DATA.threads.length; m++) {
-    DATA.threads[m].html = markdown.toHTML(DATA.threads[m].markdown);
+    if (!m) {
+      console.log(DATA.threads[m].markdown);
+      console.log(md.render(DATA.threads[m].markdown));
+    }
+    DATA.threads[m].html = md.render(DATA.threads[m].markdown);
     delete DATA.threads[m].markdown;
   }
 
