@@ -113,7 +113,7 @@ $('.thread-line').on('click', function(e) {
 });
 
 $(document).ready(function() {
-  if (window.location.hash.indexOf('line-')) {
+  if (window.location.hash.indexOf('line-') > -1) {
     var elem = $(window.location.hash);
     elem.parentsUntil('.thread-name', 'ul, li').toggleClass('open');
     elem.addClass('selected');
